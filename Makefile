@@ -1,4 +1,4 @@
-.PHONY: dev dev-auth dev-booking dev-notification
+.PHONY: dev dev-auth dev-booking dev-notification docker-up docker-down
 
 dev:
 	$(MAKE) dev-auth & $(MAKE) dev-booking & $(MAKE) dev-client
@@ -18,4 +18,13 @@ stop:
 install:
 	cd authentication_service && npm install
 	cd core_service && npm install
-	cd client && npm install 
+	cd client && npm install
+
+docker-up:
+	sudo docker-compose up --build
+
+docker-down:
+	docker-compose down
+
+docker-logs:
+	docker-compose logs -f 
