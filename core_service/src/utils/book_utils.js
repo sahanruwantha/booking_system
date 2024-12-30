@@ -1,32 +1,30 @@
 const { v4: uuidv4 } = require('uuid');
-const db = require('./db');
+const { Trip, SeatBooking } = require('../models/schemas');
 const routeUtils = require('./route_utils');
 
 const createTrip = async (bus_route, driver_name, conductor_name, trip_date) => {
     const trip_id = uuidv4();
-    const formattedDate = trip_date.toISOString();
     
-    await db.run(
-        'INSERT INTO trips (trip_id, bus_route, driver_name, conductor_name, trip_date) VALUES (?, ?, ?, ?, ?)',
-        [trip_id, bus_route, driver_name, conductor_name, formattedDate]
-    );
+    const trip = await Trip.create({
+        tripId: trip_id,
+        busRoute: bus_route,
+        driverName: driver_name,
+        conductorName: conductor_name,
+        tripDate: trip_date
+    });
     
-    return trip_id;
+    return trip.tripId;
 };
 
 const bookSeats = async (trip_id, user_id, seat_ids) => {
+    console.log(trip_id, user_id, seat_ids);
     const bookingIds = [];
-    const timestamp = new Date().toISOString();
-    
-    // Create placeholders for the IN clause
-    const placeholders = seat_ids.map(() => '?').join(',');
     
     // Check if seats are already booked
-    const existingSeats = await db.all(
-        `SELECT seat_id FROM seat_bookings WHERE trip_id = ? AND seat_id IN (${placeholders})`,
-        [trip_id, ...seat_ids]
-    );
-    console.log(existingSeats);
+    const existingSeats = await SeatBooking.find({
+        tripId: trip_id,
+        seatId: { $in: seat_ids }
+    });
 
     if (existingSeats.length > 0) {
         throw new Error('One or more seats are already booked');
@@ -35,13 +33,16 @@ const bookSeats = async (trip_id, user_id, seat_ids) => {
     // Book all seats
     for (const seat_id of seat_ids) {
         const booking_id = uuidv4();
-        await db.run(
-            'INSERT INTO seat_bookings (booking_id, trip_id, user_id, seat_id, created_at) VALUES (?, ?, ?, ?, ?)',
-            [booking_id, trip_id, user_id, seat_id, timestamp]
-        );
+        await SeatBooking.create({
+            bookingId: booking_id,
+            tripId: trip_id,
+            userId: user_id,
+            seatId: seat_id
+        });
         bookingIds.push(booking_id);
     }
 
+    console.log(bookingIds);
     return bookingIds;
 };
 
@@ -56,14 +57,13 @@ const getTrips = async (start, end, date) => {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const trips = await db.all(
-        'SELECT trip_id, trip_date FROM trips WHERE bus_route = ? AND trip_date BETWEEN ? AND ?',
-        [
-            routeInfo.route.replace(' (Reverse Direction)', ''),
-            startOfDay.toISOString(),
-            endOfDay.toISOString()
-        ]
-    );
+    const trips = await Trip.find({
+        busRoute: routeInfo.route.replace(' (Reverse Direction)', ''),
+        tripDate: {
+            $gte: startOfDay,
+            $lte: endOfDay
+        }
+    }).select('tripId tripDate');
     
     return {
         route: routeInfo.route,

@@ -9,6 +9,7 @@ import { useAuth } from './context/AuthContext';
 import TripCreator from './components/TripCreator';
 import AdminDashboard from './components/AdminDashboard';
 import BookingConfirmation from './components/BookingConfirmation';
+import RouteCreator from './components/RouteCreator';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, userType } = useAuth();
@@ -40,6 +41,14 @@ const App = () => {
             element={
               <AdminRoute>
                 <TripCreator />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/routes/create"
+            element={
+              <AdminRoute>
+                <RouteCreator />
               </AdminRoute>
             }
           />

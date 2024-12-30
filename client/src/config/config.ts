@@ -1,4 +1,4 @@
 export const API_CONFIG = {
-    AUTH_API_URL: import.meta.env.REACT_APP_AUTH_API_URL || 'http://localhost:3001',
-    CORE_API_URL: import.meta.env.REACT_APP_CORE_API_URL || 'http://localhost:3000'
+    API_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+    AUTH_API_URL: import.meta.env.VITE_AUTH_API_URL || 'http://localhost:3001'
 }; 

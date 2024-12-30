@@ -77,11 +77,12 @@ const AdminDashboard = () => {
       }
 
       const data = await response.json();
+      console.log(data);
       // Transform the string array into Route objects
-      const formattedRoutes: Route[] = data.routes.map((routeName: string) => ({
-        route_id: routeName.toLowerCase().replace(/\s+/g, '-'),
-        routeName: routeName,
-        stops: [] // Initially empty, you'll need to fetch stops separately if needed
+      const formattedRoutes: Route[] = data.routes.map((route: any) => ({
+        route_id: route.routeName.toLowerCase().replace(/\s+/g, '-'),
+        routeName: route.routeName,
+        stops: route.stops
       }));
       setRoutes(formattedRoutes);
     } catch (err) {
@@ -205,16 +206,16 @@ const AdminDashboard = () => {
                   {trips.map((trip) => (
                     <tr key={trip.trip_id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {trip.bus_route}
+                        {trip.busRoute}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {trip.driver_name}
+                        {trip.driverName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {trip.conductor_name}
+                        {trip.conductorName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(trip.trip_date).toLocaleString()}
+                        {new Date(trip.tripDate).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex justify-end gap-2">

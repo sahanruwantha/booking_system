@@ -48,7 +48,7 @@ const Payment = () => {
         body: JSON.stringify({
           trip_id: tripId,
           seat_ids: selectedSeats,
-          payment_info: cardInfo // Your backend should handle this securely
+          payment_info: cardInfo
         }),
       });
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { API_CONFIG } from '../config/config';
 
 interface SeatSelectionProps {
   tripId: string;
@@ -29,10 +30,8 @@ const SeatSelection = () => {
   useEffect(() => {
     const fetchBookedSeats = async () => {
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
         const token = localStorage.getItem('token');
-        
-        const response = await fetch(`${baseUrl}/api/bus/trips/${tripId}/seats`, {
+        const response = await fetch(`${API_CONFIG.API_URL}/bus/trips/${tripId}/seats`, {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -45,6 +44,7 @@ const SeatSelection = () => {
         }
         
         const data = await response.json();
+        console.log(data);
         const formattedBookedSeats = data.bookedSeats.map((seatId: string) => ({
           seat_id: seatId
         }));

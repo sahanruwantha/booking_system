@@ -4,8 +4,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 interface Trip {
-  trip_id: string;
-  trip_date: string;
+  _id: string;
+  tripId: string;
+  tripDate: string;
 }
 
 interface RouteResult {
@@ -81,8 +82,9 @@ const BusRouteFinder = () => {
   const handleBooking = (trip: Trip) => {
     navigate('/seat-selection', {
       state: {
-        tripId: trip.trip_id,
-        tripDate: trip.trip_date
+        tripId: trip.tripId,
+        tripDate: trip.tripDate,
+        selectedSeats: []
       }
     });
   };
@@ -190,17 +192,28 @@ const BusRouteFinder = () => {
                   <h3 className="text-lg font-semibold text-gray-800">Available Trips</h3>
                   {searchResult.availableTrips.map((trip) => (
                     <div
-                      key={trip.trip_id}
+                      key={trip._id}
                       className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200"
                     >
                       <div className="flex justify-between items-center">
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
                             <FaClock className="text-blue-500" />
-                            <span className="text-gray-700">{formatTime(trip.trip_date)}</span>
+                            <span className="text-gray-700">
+                              {new Date(trip.tripDate).toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                              })}
+                            </span>
                           </div>
                           <div className="text-sm text-gray-500">
-                            {formatDate(trip.trip_date)}
+                            {new Date(trip.tripDate).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
                           </div>
                         </div>
                         <button
