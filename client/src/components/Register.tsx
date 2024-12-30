@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { API_CONFIG } from '../config/config';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -33,8 +34,7 @@ const Register = () => {
     }
 
     try {
-      const baseUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:3001';
-      const response = await fetch(`${baseUrl}/auth/register`, {
+      const response = await fetch(`${API_CONFIG.AUTH_API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,17 +45,13 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        login(data.accessToken, data.refreshToken, data.userType, data.userId);
+        login(data.accessToken, data.userType);
         navigate('/');
       } else {
-        if (data.error?.includes('UNIQUE constraint failed: users.email')) {
-          setError('This email address is already registered');
-        } else {
-          setError(data.error || 'Registration failed');
-        }
+        setError(data.error || 'Registration failed');
       }
     } catch (err) {
-      setError('An error occurred during registration');
+      setError('Failed to connect to the server');
     }
   };
 

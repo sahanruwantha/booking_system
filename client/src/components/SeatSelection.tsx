@@ -8,8 +8,6 @@ interface SeatSelectionProps {
 
 interface BookedSeat {
   seat_id: string;
-  booking_id: string;
-  user_id: string;
 }
 
 const SeatSelection = () => {
@@ -47,7 +45,10 @@ const SeatSelection = () => {
         }
         
         const data = await response.json();
-        setBookedSeats(data.bookedSeats);
+        const formattedBookedSeats = data.bookedSeats.map((seatId: string) => ({
+          seat_id: seatId
+        }));
+        setBookedSeats(formattedBookedSeats);
       } catch (err) {
         setError('Failed to fetch booked seats');
         console.error('Error fetching booked seats:', err);
@@ -79,50 +80,14 @@ const SeatSelection = () => {
       return;
     }
 
-    setLoading(true);
-    setError('');
-    
-    try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      const token = localStorage.getItem('token');
-
-      const response = await fetch(`${baseUrl}/api/bookings/book`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          trip_id: tripId,
-          seat_ids: selectedSeats
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    // Navigate to payment page with selected seats info
+    navigate('/payment', { 
+      state: { 
+        tripId,
+        tripDate,
+        selectedSeats,
       }
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert('Booking successful!');
-        navigate('/booking-confirmation', { 
-          state: { 
-            bookingIds: data.booking_ids,
-            tripDate,
-            selectedSeats 
-          }
-        });
-      } else {
-        throw new Error(data.message || 'Failed to book seats');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to book seats');
-      console.error('Booking error:', err);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (

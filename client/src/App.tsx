@@ -4,9 +4,11 @@ import Login from './components/Login';
 import Register from './components/Register';
 import BusRouteFinder from './components/BusRouteFinder';
 import SeatSelection from './components/SeatSelection';
+import Payment from './components/Payment';
 import { useAuth } from './context/AuthContext';
 import TripCreator from './components/TripCreator';
 import AdminDashboard from './components/AdminDashboard';
+import BookingConfirmation from './components/BookingConfirmation';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, userType } = useAuth();
@@ -54,6 +56,22 @@ const App = () => {
             element={
               <PrivateRoute>
                 <SeatSelection />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/payment"
+            element={
+              <PrivateRoute>
+                <Payment />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/booking-confirmation"
+            element={
+              <PrivateRoute>
+                <BookingConfirmation />
               </PrivateRoute>
             }
           />

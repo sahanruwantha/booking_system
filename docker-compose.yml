@@ -9,10 +9,13 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=development
+      - CORS_ORIGIN=http://localhost:5173
     volumes:
-      - ./authentication_service:/usr/src/app
-      - /usr/src/app/node_modules
-    command: npm run dev
+      - ./authentication_service:/usr/src/app:rw
+      - /authentication_service/src/app/node_modules
+      - shared-data:/shared/database:rw
+    networks:
+      - default
 
   core-service:
     build:
@@ -22,10 +25,15 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
+      - AUTH_SERVER=http://localhost:3001
     volumes:
       - ./core_service:/usr/src/app
-      - /usr/src/app/node_modules
+      - /core_service/src/app/node_modules
+      - shared-data:/shared/database:rw
     command: npm run dev
+    restart: unless-stopped
+    depends_on:
+      - auth-service
 
   client:
     build:
@@ -35,11 +43,23 @@ services:
       - "5173:5173"
     environment:
       - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+      - VITE_AUTH_API_URL=http://localhost:3001
+      - VITE_CORE_API_URL=http://localhost:3000
     volumes:
       - ./client:/usr/src/app
-      - /usr/src/app/node_modules
+      - /client/src/app/node_modules
     command: npm run dev
+    restart: unless-stopped
+    depends_on:
+      - core-service
+    networks:
+      - default
 
 networks:
   default:
     driver: bridge 
+
+volumes:
+  shared-data:
+    name: shared-data

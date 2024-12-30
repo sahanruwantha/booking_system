@@ -6,4 +6,8 @@ router.post('/register', auth_controller.register)
 
 router.post('/login', auth_controller.login)
 
+router.post('/verify', auth_controller.verifyToken)
+
+router.post('/refresh', auth_controller.refreshToken)
+
 module.exports = router; 

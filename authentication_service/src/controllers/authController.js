@@ -1,14 +1,13 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const db = require('../../../core_service/src/utils/db');
+const db = require('../utils/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
 
 class AuthController {
     constructor() {
-        // Bind the methods to preserve 'this' context
         this.register = this.register.bind(this);
         this.login = this.login.bind(this);
         this.refreshToken = this.refreshToken.bind(this);
@@ -148,6 +147,37 @@ class AuthController {
             JWT_REFRESH_SECRET,
             { expiresIn: '7d' }
         );
+    }
+
+    async verifyToken(req, res) {
+        try {
+            const { token } = req.body;
+            
+            if (!token) {
+                return res.status(401).json({ error: 'Token required' });
+            }
+
+            const decoded = jwt.verify(token, JWT_SECRET);
+            
+            // Get user details from database
+            const user = await db.get(
+                'SELECT user_id, user_type FROM users WHERE user_id = ?',
+                [decoded.userId]
+            );
+
+            if (!user) {
+                return res.status(403).json({ error: 'Invalid token' });
+            }
+
+            res.json({ 
+                user: {
+                    userId: user.user_id,
+                    userType: user.user_type
+                }
+            });
+        } catch (error) {
+            res.status(403).json({ error: 'Invalid token' });
+        }
     }
 }
 

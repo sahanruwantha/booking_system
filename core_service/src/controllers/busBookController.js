@@ -75,21 +75,21 @@ const getBookedSeatsController = async (req, res) => {
         const { tripId } = req.params;
         console.log(tripId);
         
-        db.all(
-            'SELECT booking_id, trip_id, user_id, seat_id FROM seat_bookings WHERE trip_id = ?',
-            [tripId],
-            (err, bookedSeats) => {
-                if (err) {
-                    res.status(500).json({
-                        success: false,
-                        message: 'Failed to fetch booked seats',
-                        error: err.message
-                    });
-                    return;
-                }
-                res.json({ bookedSeats });
-            }
+        // Convert the callback-based db.all to a Promise
+        const bookedSeats = await db.all(
+            'SELECT seat_id FROM seat_bookings WHERE trip_id = ?',
+            [tripId]
         );
+
+        // Transform the results to just an array of seat IDs
+        const seatIds = bookedSeats.map(seat => seat.seat_id);
+        console.log(seatIds);
+        
+        res.json({ 
+            success: true,
+            bookedSeats: seatIds 
+        });
+        
     } catch (error) {
         res.status(500).json({
             success: false,

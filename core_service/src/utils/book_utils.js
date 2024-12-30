@@ -17,12 +17,16 @@ const createTrip = async (bus_route, driver_name, conductor_name, trip_date) => 
 const bookSeats = async (trip_id, user_id, seat_ids) => {
     const bookingIds = [];
     const timestamp = new Date().toISOString();
-
+    
+    // Create placeholders for the IN clause
+    const placeholders = seat_ids.map(() => '?').join(',');
+    
     // Check if seats are already booked
     const existingSeats = await db.all(
-        'SELECT seat_id FROM seat_bookings WHERE trip_id = ? AND seat_id IN (?)',
-        [trip_id, seat_ids.join(',')]
+        `SELECT seat_id FROM seat_bookings WHERE trip_id = ? AND seat_id IN (${placeholders})`,
+        [trip_id, ...seat_ids]
     );
+    console.log(existingSeats);
 
     if (existingSeats.length > 0) {
         throw new Error('One or more seats are already booked');
