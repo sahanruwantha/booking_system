@@ -1,25 +1,20 @@
 const BusRoute = require('../utils/route_utils');
-const { ErrorResponseDto } = require('../models/bus-model');
+const { BusRoute: BusRouteModel } = require('../models/schemas');
 
-const getRoute = async (req, res, next) => {
+const getRoute = async (req, res) => {
     try {
-        // Set JSON content type header
         res.setHeader('Content-Type', 'application/json');
-
         const route = await BusRoute.get_route(req.params.start, req.params.end);
         
-        // Log the route for debugging
         console.log('Route result:', route);
 
         if (route.error) {
-            // Return JSON error response
             return res.status(404).json({
                 error: route.error,
                 message: `No route found between ${req.params.start} and ${req.params.end}`
             });
         }
 
-        // Return JSON success response
         res.json({
             route: route.route,
             stops: route.stops,
@@ -27,7 +22,6 @@ const getRoute = async (req, res, next) => {
         });
     } catch (error) {
         console.error('Route error:', error);
-        // Return JSON error response
         res.status(500).json({
             error: 'Internal Server Error',
             message: error.message
@@ -38,6 +32,7 @@ const getRoute = async (req, res, next) => {
 const listRoutes = async (req, res) => {
     try {
         const routes = await BusRoute.list_routes();
+        console.log(routes);
         res.json({ routes });
     } catch (error) {
         res.status(500).json({
@@ -62,6 +57,16 @@ const getRouteStops = async (req, res) => {
 const addRoute = async (req, res) => {
     try {
         const { routeName, stops } = req.body;
+        
+        // Check if route already exists
+        const existingRoute = await BusRouteModel.findOne({ routeName });
+        if (existingRoute) {
+            return res.status(409).json({
+                error: 'Route already exists',
+                message: `A route with name ${routeName} already exists`
+            });
+        }
+
         const result = await BusRoute.add_route(routeName, stops);
         res.status(201).json(result);
     } catch (error) {

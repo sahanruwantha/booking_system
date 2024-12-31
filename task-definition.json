@@ -1,0 +1,37 @@
+{
+    "family": "auth-service",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "containerDefinitions": [{
+        "name": "auth-service",
+        "image": "your-account-id.dkr.ecr.your-region.amazonaws.com/auth-service:latest",
+        "portMappings": [{
+            "containerPort": 3001,
+            "protocol": "tcp"
+        }],
+        "secrets": [
+            {
+                "name": "JWT_SECRET",
+                "valueFrom": "arn:aws:secretsmanager:region:account:secret:auth-service/production:JWT_SECRET::"
+            },
+            {
+                "name": "JWT_REFRESH_SECRET",
+                "valueFrom": "arn:aws:secretsmanager:region:account:secret:auth-service/production:JWT_REFRESH_SECRET::"
+            },
+            {
+                "name": "MONGODB_URI",
+                "valueFrom": "arn:aws:secretsmanager:region:account:secret:auth-service/production:MONGODB_URI::"
+            }
+        ],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "/ecs/auth-service",
+                "awslogs-region": "your-region",
+                "awslogs-stream-prefix": "ecs"
+            }
+        }
+    }]
+} 

@@ -1,6 +1,5 @@
 const { createTrip, bookSeats, getTrips } = require('../utils/book_utils');
-const { getUser } = require('../utils/user_utils');
-const db = require('../utils/db');
+const { Trip, SeatBooking } = require('../models/schemas');
 
 const getTripController = async (req, res) => {
     try {
@@ -43,21 +42,32 @@ const createTripController = async (req, res) => {
 
 const bookSeatsController = async (req, res) => {
     try {
-        const { trip_id, seat_ids } = req.body;
+        const { trip_id, seat_ids, payment_info } = req.body;
         const user_id = req.user.userId;
         
-        if (!trip_id || !seat_ids || !Array.isArray(seat_ids)) {
+        if (!trip_id || !seat_ids || !Array.isArray(seat_ids) || !payment_info) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid request parameters'
             });
         }
 
+        // Verify payment info first
+        // TODO: Implement payment verification logic here
+        // const paymentVerified = await verifyPayment(payment_info);
+        // if (!paymentVerified) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: 'Payment verification failed'
+        //     });
+        // }
+
         const bookingIds = await bookSeats(trip_id, user_id, seat_ids);
         
         res.status(201).json({
             success: true,
             booking_ids: bookingIds,
+            payment_status: 'success',
             message: 'Seats booked successfully'
         });
     } catch (error) {
@@ -73,23 +83,18 @@ const bookSeatsController = async (req, res) => {
 const getBookedSeatsController = async (req, res) => {
     try {
         const { tripId } = req.params;
-        console.log(tripId);
+        console.log('tripId', tripId);
+        const bookedSeats = await SeatBooking.find(
+            { tripId: tripId }
+        ).lean();
+        console.log('bookedSeats', bookedSeats);
+        const seatIds = bookedSeats.map(booking => booking.seatId);
         
-        db.all(
-            'SELECT booking_id, trip_id, user_id, seat_id FROM seat_bookings WHERE trip_id = ?',
-            [tripId],
-            (err, bookedSeats) => {
-                if (err) {
-                    res.status(500).json({
-                        success: false,
-                        message: 'Failed to fetch booked seats',
-                        error: err.message
-                    });
-                    return;
-                }
-                res.json({ bookedSeats });
-            }
-        );
+        res.json({ 
+            success: true,
+            bookedSeats: seatIds 
+        });
+        
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -101,7 +106,7 @@ const getBookedSeatsController = async (req, res) => {
 
 const getTripsController = async (req, res) => {
     try {
-        const trips = await db.all('SELECT * FROM trips ORDER BY trip_date DESC');
+        const trips = await Trip.find().sort({ trip_date: -1 });
         res.json({ trips });
     } catch (error) {
         res.status(500).json({
@@ -115,7 +120,7 @@ const getTripsController = async (req, res) => {
 const getTripByIdController = async (req, res) => {
     try {
         const { id } = req.params;
-        const trip = await db.get('SELECT * FROM trips WHERE trip_id = ?', [id]);
+        const trip = await Trip.findById(id);
         
         if (!trip) {
             return res.status(404).json({
@@ -123,7 +128,6 @@ const getTripByIdController = async (req, res) => {
                 message: 'Trip not found'
             });
         }
-
         res.json({ trip });
     } catch (error) {
         res.status(500).json({
@@ -139,12 +143,13 @@ const updateTripController = async (req, res) => {
         const { id } = req.params;
         const { bus_route, driver_name, conductor_name, trip_date } = req.body;
 
-        const result = await db.run(
-            'UPDATE trips SET bus_route = ?, driver_name = ?, conductor_name = ?, trip_date = ? WHERE trip_id = ?',
-            [bus_route, driver_name, conductor_name, trip_date, id]
+        const trip = await Trip.findByIdAndUpdate(
+            id,
+            { bus_route, driver_name, conductor_name, trip_date },
+            { new: true }
         );
 
-        if (result.changes === 0) {
+        if (!trip) {
             return res.status(404).json({
                 success: false,
                 message: 'Trip not found'
@@ -153,7 +158,8 @@ const updateTripController = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Trip updated successfully'
+            message: 'Trip updated successfully',
+            trip
         });
     } catch (error) {
         res.status(500).json({
@@ -167,9 +173,9 @@ const updateTripController = async (req, res) => {
 const deleteTripController = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await db.run('DELETE FROM trips WHERE trip_id = ?', [id]);
+        const trip = await Trip.findByIdAndDelete(id);
 
-        if (result.changes === 0) {
+        if (!trip) {
             return res.status(404).json({
                 success: false,
                 message: 'Trip not found'

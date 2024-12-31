@@ -1,8 +1,8 @@
-const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const AUTH_SERVER = process.env.AUTH_SERVER || 'http://localhost:3001';
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
@@ -11,8 +11,8 @@ const authenticateToken = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
+        const response = await axios.post(`${AUTH_SERVER}/auth/verify`, { token });
+        req.user = response.data.user;
         next();
     } catch (error) {
         return res.status(403).json({ error: 'Invalid token' });
